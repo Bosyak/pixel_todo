@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Доска заданий{% endblock %}
+{% block content %}
+<div class="page-head">
+    <h1>Карта квестов</h1>
+    <a href="{% url 'tasks:create' %}" class="pixel-btn">+ Новый монстр</a>
+</div>
+
+<div class="week-grid">
+    {% for day_num, day in weekdays.items %}
+    <div class="day-column">
+        <div class="day-header">
+            {{ day.name }} <span class="count">({{ day.tasks|length }})</span>
+        </div>
+        <div class="day-body">
+            {% for task in day.tasks %}
+            <div class="task-card difficulty-{{ task.difficulty }}">
+                <div class="task-title-row">
+                    <img src="{{ task.monster_cdn_url }}" alt="" class="monster-mini">
+                    <strong>{{ task.title }}</strong>
+                    <span class="diff-icon">
+                        {% if task.difficulty == 'easy' %}🟢
+                        {% elif task.difficulty == 'medium' %}🟡
+                        {% else %}🔴{% endif %}
+                    </span>
+                </div>
+
+                {% if task.tags.all %}
+                <div class="tags-row">
+                    {% for tag in task.tags.all %}
+                    <span class="tag" style="background:{{ tag.color }};">{{ tag.name }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="task-meta">
+                    ⏱ {{ task.duration_minutes }} мин
+                    {% if task.scheduled_time %} 🕐 {{ task.scheduled_time|time:"H:i" }}{% endif %}
+                </div>
+                <div class="task-meta">
+                    💀 HP: {{ task.monster_hp }} | ⭐ XP: {{ task.exp_reward }}
+                </div>
+                {% if task.is_group %}<div class="group-mark">👥 Групповое</div>{% endif %}
+
+                <div class="task-actions">
+                    {% if task.status == 'pending' %}
+                        <a href="{% url 'battle:start' task.id %}" class="pixel-btn btn-sm">⚔️ В бой</a>
+                    {% elif task.status == 'in_progress' %}
+                        <a href="{% url 'battle:start' task.id %}" class="pixel-btn btn-sm btn-orange">🔥 В бою</a>
+                    {% else %}
+                        <span class="pixel-btn btn-sm btn-green">✅ Побеждён</span>
+                    {% endif %}
+
+                    {% if task.owner == user %}
+                        <a href="{% url 'tasks:edit' task.id %}" class="pixel-btn btn-sm">✏️</a>
+                        <form method="post" action="{% url 'tasks:delete' task.id %}" class="inline-form">
+                            {% csrf_token %}
+                            <button type="submit" class="pixel-btn btn-sm btn-red"
+                                    onclick="return confirm('Удалить монстра?')">🗑️</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+                <div class="empty-note">Нет монстров</div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

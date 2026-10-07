@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="pixel-panel form-panel">
+    <h1>{{ title }}</h1>
+    <form method="post" class="pixel-form">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="form-row">
+                <label>{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+                {% if field.errors %}<div class="error-msg">{{ field.errors|join:", " }}</div>{% endif %}
+            </div>
+        {% endfor %}
+        <div class="form-actions">
+            <button type="submit" class="pixel-btn">Сохранить</button>
+            <a href="{% url 'tasks:board' %}" class="pixel-btn">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

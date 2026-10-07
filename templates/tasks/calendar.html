@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Календарь{% endblock %}
+{% block extra_css %}
+<style>
+    #calendar {
+        background: var(--pixel-panel);
+        border: 3px solid var(--pixel-border);
+        padding: 12px;
+        box-shadow: 4px 4px 0 #000;
+        color: #000;
+    }
+    .fc { font-family: 'Press Start 2P', monospace; font-size: 9px; }
+    .fc-event { border-radius: 0 !important; border: 2px solid #000 !important; box-shadow: 2px 2px 0 #000; cursor: pointer; }
+    .fc-toolbar-title { font-size: 14px !important; }
+    .fc-daygrid-day-number, .fc-col-header-cell-cushion { color: #000 !important; }
+</style>
+{% endblock %}
+{% block content %}
+<div style="padding:16px;">
+    <h1 style="font-size:14px;">📅 Календарь квестов</h1>
+    <div id="calendar"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const calendarEl = document.getElementById('calendar');
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'ru',
+        firstDay: 1,
+        buttonText: { today: 'Сегодня', month: 'Месяц', week: 'Неделя', day: 'День' },
+        events: '{% url "tasks:calendar_events" %}',
+        eventClick: function (info) {
+            const p = info.event.extendedProps;
+            alert(
+                '🐉 ' + info.event.title + '\n' +
+                'Сложность: ' + p.difficulty + '\n' +
+                'Теги: ' + (p.tags.join(', ') || 'нет') + '\n' +
+                'Длительность: ' + p.duration + ' мин\n' +
+                'Статус: ' + p.status + '\n' +
+                'XP за победу: ' + p.exp
+            );
+        },
+    });
+    calendar.render();
+});
+</script>
+{% endblock %}

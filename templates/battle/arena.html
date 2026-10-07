@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Битва: {{ task.title }}{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/battle.css' %}">
+{% endblock %}
+{% block content %}
+<div class="battle-arena" id="battleArena">
+    <div class="battle-background"></div>
+
+    <div class="monster-area">
+        <div class="monster-sprite" id="monsterSprite">
+            <img src="{{ task.monster_cdn_url }}" alt="{{ task.title }}" class="pixel-sprite">
+        </div>
+        <div class="monster-name">{{ task.title }}</div>
+        <div class="hp-bar">
+            <div class="hp-bar-fill" id="monsterHpBar" style="width:100%;"></div>
+        </div>
+        <div class="hp-text" id="monsterHpText">{{ monster_hp }}/{{ monster_hp }}</div>
+    </div>
+
+    <div class="vs-text">⚔️ VS ⚔️</div>
+
+    <div class="character-area">
+        <div class="character-sprite" id="characterSprite">
+            <img src="{{ user.character.avatar_url }}" alt="{{ user.character.name }}" class="pixel-sprite">
+        </div>
+        <div class="character-name">{{ user.character.name }} (Ур. {{ user.character.level }})</div>
+    </div>
+
+    <div class="battle-log" id="battleLog">
+        <p>⚔️ Битва началась!</p>
+    </div>
+
+    <div class="battle-actions">
+        {% if task.status == 'in_progress' %}
+        <button class="pixel-btn attack-btn" id="attackBtn" onclick="performAttack()">🗡️ Атаковать</button>
+        <button class="pixel-btn" id="finishBtn" onclick="finishBattle()"
+                style="display:none; background:#FFD700; color:#000;">⭐ Победный удар!</button>
+        {% else %}
+        <a href="{% url 'tasks:board' %}" class="pixel-btn">← Вернуться</a>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+const taskId = {{ task.id }};
+const maxHp = {{ monster_hp }};
+let currentHp = maxHp;
+let attackCount = 0;
+const totalAttacks = 3;
+
+function performAttack() {
+    const monster = document.getElementById('monsterSprite');
+    const player  = document.getElementById('characterSprite');
+    const hpBar   = document.getElementById('monsterHpBar');
+    const hpText  = document.getElementById('monsterHpText');
+    const log     = document.getElementById('battleLog');
+
+    player.classList.add('attacking');
+    setTimeout(() => player.classList.remove('attacking'), 500);
+
+    const damage = Math.floor(maxHp / totalAttacks);
+    currentHp = Math.max(0, currentHp - damage);
+
+    setTimeout(() => {
+        monster.classList.add('shaking', 'damage-flash');
+        setTimeout(() => monster.classList.remove('shaking', 'damage-flash'), 300);
+        hpBar.style.width = (currentHp / maxHp * 100) + '%';
+        hpText.textContent = currentHp + '/' + maxHp;
+        log.innerHTML += '<p>🗡️ Вы нанесли ' + damage + ' урона!</p>';
+        log.scrollTop = log.scrollHeight;
+    }, 250);
+
+    attackCount++;
+
+    if (attackCount >= totalAttacks || currentHp <= 0) {
+        document.getElementById('attackBtn').style.display = 'none';
+        document.getElementById('finishBtn').style.display = 'inline-block';
+        log.innerHTML += '<p style="color:#FFD700;">💀 Монстр ослаблен! Нанесите победный удар!</p>';
+    }
+}
+
+function finishBattle() {
+    const monster = document.getElementById('monsterSprite');
+    const log = document.getElementById('battleLog');
+
+    fetch('/battle/finish/' + taskId + '/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            monster.classList.add('defeated');
+            log.innerHTML += '<p style="color:#FFD700; font-size:14px;">🎉 ПОБЕДА!</p>';
+            log.innerHTML += '<p>⭐ Получено ' + data.exp_gained + ' XP!</p>';
+            log.innerHTML += '<p>📊 Уровень: ' + data.new_level + '</p>';
+            setTimeout(() => window.location.href = '{% url "tasks:board" %}', 3000);
+        } else {
+            log.innerHTML += '<p style="color:red;">Ошибка сервера</p>';
+        }
+    })
+    .catch(() => log.innerHTML += '<p style="color:red;">Ошибка соединения</p>');
+}
+</script>
+{% endblock %}

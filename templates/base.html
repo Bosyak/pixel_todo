@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Pixel Quest{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css">
+    <link rel="stylesheet" href="{% static 'css/pixel.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <header class="top-bar">
+        <div class="player-info">
+            <img src="{{ user.character.avatar_url }}" alt="avatar" class="avatar">
+            <div>
+                <div class="char-name">{{ user.character_or_create.name }}</div>
+                <div class="char-level">Ур. {{ user.character_or_create.level }}</div>
+            </div>
+            <div class="xp-block">
+                <div class="hp-bar">
+                    <div class="hp-bar-fill xp-fill" style="width:{{ user.character.exp_percent }}%;"></div>
+                </div>
+                <div class="xp-text">{{ user.character_or_create.experience }}/{{ user.character_or_create.exp_to_next_level }} XP</div>
+            </div>
+        </div>
+        <nav class="main-nav">
+            <a href="{% url 'tasks:board' %}" class="pixel-btn">Доска</a>
+            <a href="{% url 'tasks:calendar' %}" class="pixel-btn">Календарь</a>
+            <a href="{% url 'users:logout' %}" class="pixel-btn">Выход</a>
+        </nav>
+    </header>
+    {% endif %}
+
+    <main class="container">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="pixel-panel message-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
